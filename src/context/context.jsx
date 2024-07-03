@@ -1,7 +1,5 @@
 import {createContext} from 'react'
 
-export default function context() {
-  return (
-    <div>context</div>
-  )
-}
+export const UserContext = createContext({})
+export const BookContext = createContext({})
+

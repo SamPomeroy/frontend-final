@@ -1,53 +1,54 @@
-import React, { Component } from 'react'
-import {toast} from 'react-toastify'
-import { Button, Container, Form } from 'react-bootstrap'
+import React, {useState} from 'react'
+import { Container, Form, Button } from 'react-bootstrap'
+import Axios from '../utils/Axios'
+import { useContext } from 'react'
+import { UserContext } from '../context/context'
+import {jwtDecode} from 'jwt-decode'
+import checkIfUserIsAuth from '../utils/checkUser'
+import { Navigate } from 'react-router-dom'
 
+function Login() {
+    const [username, setUsername] = useState('')
+    const [password, setPassword] = useState('')
+    const {user, setUser} = useContext(UserContext)
+    if(user){
+        return <Navigate to='/' />
+    }
 
-export class Login extends Component {
-    state={
-        username:'',
-        password:''
-    }
-    handleOnChange=(event)=>{
-        this.setState({[event.target.name]: event.target.value})
-    }
-    handleOnSubmit=async (event)=>{
-        event.preventDefault()
+    async function handleOnSubmit(e){
+        e.preventDefault()
         try {
-            const allUsers = JSON.parse(localStorage.getItem('allUsers')) || []
-            const user = allUsers.find(user=>user.username === this.state.username && user.password === this.state.password)
-            if(!user){
-                toast.error('Username or password is incorrect')
-                return
-            }
-            const savedArticles = JSON.parse(localStorage.getItem('savedArticles')) || []
-            const userSaved = savedArticles.filter(e=>e.username === user.username) || []
-            localStorage.setItem('loggedInUser', JSON.stringify(user))
-            this.props.handleUserLogin(user, savedArticles)
-            
+            const user = await Axios.post('/login', {username, password})
+            const actualUser = jwtDecode(user.data.payload)
+            localStorage.setItem('jwt', user.data.payload)
+            setUser(actualUser)
         } catch (error) {
             console.log(error)
-            
         }
+        setUsername('')
+        setPassword('')
     }
-  render() {
-    return (
-        <Container className='bg-black text-white'  fluid style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '92vh'}}>
-            <Form style={{width:'50vw'}} onSubmit={this.handleOnSubmit}>
-                <Form.Group>
-                    <Form.Label>Username</Form.Label>
-                    <Form.Control name='username' value={this.state.username} onChange={this.handleOnChange}></Form.Control>
-                </Form.Group>
-                <Form.Group>
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control type='password' name='password' value={this.state.password} onChange={this.handleOnChange}></Form.Control>
-                </Form.Group>
-                <Button type='submit' className='mt-3'>Submit</Button>
 
-            </Form>
-        </Container>
-    )
-  }
+
+  return (
+    <Container className='bg-black text-white'  fluid style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '92vh'}}>
+    <Form style={{width:'50vw'}} onSubmit={handleOnSubmit}>
+        <Form.Group>
+            <Form.Label>Username</Form.Label>
+            <Form.Control required name='username' value={username} onChange={(e)=>setUsername(e.target.value)}></Form.Control>
+        </Form.Group>
+        <Form.Group>
+            <Form.Label>Password</Form.Label>
+            <Form.Control required type='password' name='password' value={password} onChange={(e)=>setPassword(e.target.value)}></Form.Control>
+        </Form.Group>
+        <Button type='submit' className='mt-3'>Submit</Button>
+
+    </Form>
+</Container>
+
+
+
+  )
 }
 
 export default Login
